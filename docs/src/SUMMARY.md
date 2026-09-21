@@ -6,4 +6,5 @@
     - [Annotations](./usage/annotations.md)
     - [Configuration](./usage/configuration.md)
     - [Target OS](./usage/target_os.md)
+- [Internals](./internals/type-identity.md)
 - [Contributing](./contributing.md)

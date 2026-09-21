@@ -400,6 +400,7 @@ pub trait Language {
                         renamed: struct_name.clone(),
                         serde_rename: false
                     },
+                    module: e.shared().module.clone(),
                     fields: fields.clone(),
                     generic_types,
                     comments: vec![format!(

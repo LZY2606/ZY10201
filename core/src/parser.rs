@@ -181,6 +181,7 @@ pub fn parse(
 pub(crate) fn parse_struct(
     s: &ItemStruct,
     target_os: &[String],
+    module: &[String],
 ) -> Result<RustItem, ParseErrorWithSpan> {
     let serde_rename_all = serde_rename_all(&s.attrs);
 
@@ -200,6 +201,7 @@ pub(crate) fn parse_struct(
     if let Some(ty) = get_serialized_as_type(&s.attrs) {
         return Ok(RustItem::Alias(RustTypeAlias {
             id: get_ident(Some(&s.ident), &s.attrs, &None),
+            module: module.to_vec(),
             r#type: ty.parse()?,
             comments: parse_comment_attrs(&s.attrs),
             generic_types,
@@ -242,6 +244,7 @@ pub(crate) fn parse_struct(
 
             RustItem::Struct(RustStruct {
                 id: get_ident(Some(&s.ident), &s.attrs, &None),
+                module: module.to_vec(),
                 generic_types,
                 fields,
                 comments: parse_comment_attrs(&s.attrs),
@@ -264,6 +267,7 @@ pub(crate) fn parse_struct(
 
             RustItem::Alias(RustTypeAlias {
                 id: get_ident(Some(&s.ident), &s.attrs, &None),
+                module: module.to_vec(),
                 r#type: ty,
                 comments: parse_comment_attrs(&s.attrs),
                 generic_types,
@@ -274,6 +278,7 @@ pub(crate) fn parse_struct(
         // Unit structs or `None`
         Fields::Unit => RustItem::Struct(RustStruct {
             id: get_ident(Some(&s.ident), &s.attrs, &None),
+            module: module.to_vec(),
             generic_types,
             fields: vec![],
             comments: parse_comment_attrs(&s.attrs),
@@ -291,6 +296,7 @@ pub(crate) fn parse_struct(
 pub(crate) fn parse_enum(
     e: &ItemEnum,
     target_os: &[String],
+    module: &[String],
 ) -> Result<RustItem, ParseErrorWithSpan> {
     let generic_types = e
         .generics
@@ -309,6 +315,7 @@ pub(crate) fn parse_enum(
     if let Some(ty) = get_serialized_as_type(&e.attrs) {
         return Ok(RustItem::Alias(RustTypeAlias {
             id: get_ident(Some(&e.ident), &e.attrs, &None),
+            module: module.to_vec(),
             r#type: ty.parse()?,
             comments: parse_comment_attrs(&e.attrs),
             generic_types,
@@ -345,6 +352,7 @@ pub(crate) fn parse_enum(
 
     let shared = RustEnumShared {
         id: get_ident(Some(&e.ident), &e.attrs, &None),
+        module: module.to_vec(),
         comments: parse_comment_attrs(&e.attrs),
         variants,
         decorators: get_decorators(&e.attrs),
@@ -466,7 +474,10 @@ fn parse_enum_variant(
 
 /// Parses a type alias into a definition that more succinctly represents what
 /// typeshare needs to generate code for other languages.
-pub(crate) fn parse_type_alias(t: &ItemType) -> Result<RustItem, ParseErrorWithSpan> {
+pub(crate) fn parse_type_alias(
+    t: &ItemType,
+    module: &[String],
+) -> Result<RustItem, ParseErrorWithSpan> {
     let ty = if let Some(ty) = get_serialized_as_type(&t.attrs) {
         ty.parse()?
     } else {
@@ -485,6 +496,7 @@ pub(crate) fn parse_type_alias(t: &ItemType) -> Result<RustItem, ParseErrorWithS
 
     Ok(RustItem::Alias(RustTypeAlias {
         id: get_ident(Some(&t.ident), &t.attrs, &None),
+        module: module.to_vec(),
         r#type: ty,
         comments: parse_comment_attrs(&t.attrs),
         generic_types,
@@ -494,7 +506,10 @@ pub(crate) fn parse_type_alias(t: &ItemType) -> Result<RustItem, ParseErrorWithS
 }
 
 /// Parses a const variant.
-pub(crate) fn parse_const(c: &ItemConst) -> Result<RustItem, ParseErrorWithSpan> {
+pub(crate) fn parse_const(
+    c: &ItemConst,
+    module: &[String],
+) -> Result<RustItem, ParseErrorWithSpan> {
     let expr = parse_const_expr(&c.expr)?;
 
     // serialized_as needs to be supported in case the user wants to use a different type
@@ -520,6 +535,7 @@ pub(crate) fn parse_const(c: &ItemConst) -> Result<RustItem, ParseErrorWithSpan>
 
     Ok(RustItem::Const(RustConst {
         id: get_ident(Some(&c.ident), &c.attrs, &None),
+        module: module.to_vec(),
         r#type: ty,
         expr,
     }))
@@ -1003,7 +1019,7 @@ mod test {
         };
 
         let RustItem::Alias(rust_struct) =
-            parse_struct(&item_struct, &[]).expect("Failed to parse struct")
+            parse_struct(&item_struct, &[], &[]).expect("Failed to parse struct")
         else {
             panic!("Not a struct");
         };

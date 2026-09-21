@@ -52,6 +52,8 @@ pub struct TypeShareVisitor<'a> {
     parsed_data: ParsedData,
     file_path: PathBuf,
     parse_context: &'a ParseContext<'a>,
+    /// Stack of nested module names currently being visited.
+    module_stack: Vec<String>,
 }
 
 impl<'a> TypeShareVisitor<'a> {
@@ -66,6 +68,7 @@ impl<'a> TypeShareVisitor<'a> {
             parsed_data: ParsedData::new(crate_name, file_name, parse_context.multi_file),
             file_path,
             parse_context,
+            module_stack: Vec::new(),
         }
     }
 
@@ -278,7 +281,11 @@ impl<'ast> Visit<'ast> for TypeShareVisitor<'_> {
         debug!("Visiting {}", i.ident);
         if has_typeshare_annotation(&i.attrs) && self.target_os_accepted(&i.attrs) {
             debug!("\tParsing {}", i.ident);
-            self.collect_result(parse_struct(i, &self.parse_context.target_os));
+            self.collect_result(parse_struct(
+                i,
+                &self.parse_context.target_os,
+                &self.module_stack,
+            ));
         }
 
         syn::visit::visit_item_struct(self, i);
@@ -289,7 +296,11 @@ impl<'ast> Visit<'ast> for TypeShareVisitor<'_> {
         debug!("Visiting {}", i.ident);
         if has_typeshare_annotation(&i.attrs) && self.target_os_accepted(&i.attrs) {
             debug!("\tParsing {}", i.ident);
-            self.collect_result(parse_enum(i, &self.parse_context.target_os));
+            self.collect_result(parse_enum(
+                i,
+                &self.parse_context.target_os,
+                &self.module_stack,
+            ));
         }
 
         syn::visit::visit_item_enum(self, i);
@@ -300,7 +311,7 @@ impl<'ast> Visit<'ast> for TypeShareVisitor<'_> {
         debug!("Visiting {}", i.ident);
         if has_typeshare_annotation(&i.attrs) && self.target_os_accepted(&i.attrs) {
             debug!("\tParsing {}", i.ident);
-            self.collect_result(parse_type_alias(i));
+            self.collect_result(parse_type_alias(i, &self.module_stack));
         }
 
         syn::visit::visit_item_type(self, i);
@@ -311,10 +322,17 @@ impl<'ast> Visit<'ast> for TypeShareVisitor<'_> {
         debug!("Visiting {}", i.ident);
         if has_typeshare_annotation(&i.attrs) && self.target_os_accepted(&i.attrs) {
             debug!("\tParsing {}", i.ident);
-            self.collect_result(parse_const(i));
+            self.collect_result(parse_const(i, &self.module_stack));
         }
 
         syn::visit::visit_item_const(self, i);
+    }
+
+    /// Track nested modules so parsed items record their source module path.
+    fn visit_item_mod(&mut self, i: &'ast syn::ItemMod) {
+        self.module_stack.push(i.ident.to_string());
+        syn::visit::visit_item_mod(self, i);
+        self.module_stack.pop();
     }
 
     // Track potentially skipped modules.

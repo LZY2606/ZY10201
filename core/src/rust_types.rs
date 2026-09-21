@@ -43,6 +43,9 @@ impl std::fmt::Display for Id {
 pub struct RustStruct {
     /// The identifier for the struct.
     pub id: Id,
+    /// The module path the struct was declared in, as a list of nested
+    /// module names (empty for crate-root items).
+    pub module: Vec<String>,
     /// The generic parameters that come after the struct name.
     pub generic_types: Vec<String>,
     /// The fields of the struct.
@@ -87,6 +90,8 @@ impl Ord for RustStruct {
 pub struct RustConst {
     /// The identifier for the constant.
     pub id: Id,
+    /// The module path the constant was declared in (empty for crate-root items).
+    pub module: Vec<String>,
     /// The type identifier that this constant is referring to.
     pub r#type: RustType,
     /// The expression that the constant contains.
@@ -115,6 +120,8 @@ pub enum RustConstExpr {
 pub struct RustTypeAlias {
     /// The identifier for the alias.
     pub id: Id,
+    /// The module path the alias was declared in (empty for crate-root items).
+    pub module: Vec<String>,
     /// The generic parameters that come after the type alias name.
     pub generic_types: Vec<String>,
     /// The type identifier that this type alias is aliasing
@@ -710,6 +717,8 @@ impl RustEnum {
 pub struct RustEnumShared {
     /// The enum's ident
     pub id: Id,
+    /// The module path the enum was declared in (empty for crate-root items).
+    pub module: Vec<String>,
     /// Generic parameters for the enum, e.g. `SomeEnum<T>` would produce `vec!["T"]`
     pub generic_types: Vec<String>,
     /// Comments on the enum definition itself

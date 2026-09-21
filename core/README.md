@@ -34,6 +34,18 @@ The test suite can of course be run normally without updating any expectations:
 cargo test -p typeshare-core
 ```
 
+## Reconciled type graph (IR) tests
+
+In addition to the per-language output snapshots, `tests/ir_graph_snapshots.rs`
+snapshots the reconciled intermediate representation: a deterministic JSON
+rendering of parsed names, source modules, serialized names, generic
+parameters, dependency edges, strongly connected components and topological
+groups. `tests/language_contract.rs` asserts that every language backend
+consumes that same reconciled graph and records known per-language lowering
+differences. Both suites use inline Rust fixtures and `expect-test`; update
+them with `env UPDATE_EXPECT=1 cargo test -p typeshare-core`. See
+`docs/src/internals/type-identity.md` for the semantics.
+
 If you find yourself needing to update expectations for a specific test only, run the following (substituting the name of your test in for the last arg):
 
 ```
