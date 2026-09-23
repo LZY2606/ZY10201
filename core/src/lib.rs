@@ -2,6 +2,8 @@
 //! Contains the parser and language converters.
 pub mod context;
 pub mod error;
+/// Deterministic intermediate representation of the reconciled type graph.
+pub mod ir;
 /// Implementations for each language converter
 pub mod language;
 /// Parsing Rust code into a format the `language` modules can understand
